@@ -1,5 +1,5 @@
- __pycache__/
- data/__pycache__/
- *.pyc
- .vscode/
- .ipynb_checkpoints/
+__pycache__/
+*.pyc
+data/__pycache__/
+.vscode/
+.ipynb_checkpoints/
