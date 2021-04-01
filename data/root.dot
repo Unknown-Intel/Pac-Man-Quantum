@@ -1,0 +1,23 @@
+digraph pastafarianism {
+ordering=out;
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+Root [fillcolor=cyan, fontcolor=black, fontsize=9, label=Root, shape=octagon, style=filled];
+Continue [fillcolor=gray, fontcolor=black, fontsize=9, label=Continue, shape=ellipse, style=filled];
+Root -> Continue;
+"Seq Right" [fillcolor=orange, fontcolor=black, fontsize=9, label="Seq Right", shape=box, style=filled];
+Root -> "Seq Right";
+"Is Right Empty" [fillcolor=gray, fontcolor=black, fontsize=9, label="Is Right Empty", shape=ellipse, style=filled];
+"Seq Right" -> "Is Right Empty";
+"Turn Right" [fillcolor=gray, fontcolor=black, fontsize=9, label="Turn Right", shape=ellipse, style=filled];
+"Seq Right" -> "Turn Right";
+"Seq Left" [fillcolor=orange, fontcolor=black, fontsize=9, label="Seq Left", shape=box, style=filled];
+Root -> "Seq Left";
+"Is Left Empty" [fillcolor=gray, fontcolor=black, fontsize=9, label="Is Left Empty", shape=ellipse, style=filled];
+"Seq Left" -> "Is Left Empty";
+"Turn Left" [fillcolor=gray, fontcolor=black, fontsize=9, label="Turn Left", shape=ellipse, style=filled];
+"Seq Left" -> "Turn Left";
+"Turn Back! MUDDAFUCKA" [fillcolor=gray, fontcolor=black, fontsize=9, label="Turn Back! MUDDAFUCKA", shape=ellipse, style=filled];
+Root -> "Turn Back! MUDDAFUCKA";
+}

@@ -23,6 +23,7 @@ class MainEngine(object):
         self.statusFinishTimer = 0      # countdown timer for clear event
         self.statusScore = 0            # score
         self.statusLife = 2             # life
+        self.isRunning = True
 
         # call the next phase of initialization: loading resources
         self.__initResource()
@@ -36,7 +37,8 @@ class MainEngine(object):
             'gameover': PhotoImage(file="resource/sprite_game_over.png"),
             'wall': PhotoImage(file="resource/sprite_wall.png"),
             'cage': PhotoImage(file="resource/sprite_cage.png"),
-            'pellet': PhotoImage(file="resource/sprite_pellet.png")
+            'pellet': PhotoImage(file="resource/sprite_pellet.png"),
+            'powerup': PhotoImage(file="resource/sprite_power_pellet.png")
         }
 
         # bind sprites for moving objects
@@ -64,8 +66,8 @@ class MainEngine(object):
 
 
         self.wSounds = {
-            'chomp1': pygame.mixer.Sound(file="resource/sound_chomp1.wav"),
-            'chomp2': pygame.mixer.Sound(file="resource/sound_chomp2.wav")
+            'chomp1': "",   #pygame.mixer.Sound(file="resource/sound_chomp1.wav"),
+            'chomp2': ""    #pygame.mixer.Sound(file="resource/sound_chomp2.wav")
         }
 
         # call the next phase of initialization: generate widgets
@@ -158,9 +160,17 @@ class MainEngine(object):
                 elif field.gameEngine.levelObjects[i][j].name == "cage":
                     self.wGameCanv.itemconfig(self.wGameCanvObjects[i][j], image=self.wSprites['cage'], state='normal')
                     self.wGameCanv.coords(self.wGameCanvObjects[i][j], 3+i*17+8, 30+j*17+8)
+                    self.cageCoordsabs = (3 + i*17 + 8,( 30+j*17 + 8) + 17)
+                    self.cageCoordsRel = (i,j)
                 elif field.gameEngine.levelObjects[i][j].name == "pellet":
                     if field.gameEngine.levelObjects[i][j].isDestroyed == False:
                         self.wGameCanv.itemconfig(self.wGameCanvObjects[i][j], image=self.wSprites['pellet'], state='normal')
+                        self.wGameCanv.coords(self.wGameCanvObjects[i][j], 3+i*17+8, 30+j*17+8)
+                    else:
+                        pass
+                elif field.gameEngine.levelObjects[i][j].name == "powerup":
+                    if field.gameEngine.levelObjects[i][j].isDestroyed == False:
+                        self.wGameCanv.itemconfig(self.wGameCanvObjects[i][j], image=self.wSprites['powerup'], state='normal')
                         self.wGameCanv.coords(self.wGameCanvObjects[i][j], 3+i*17+8, 30+j*17+8)
                     else:
                         pass
@@ -181,9 +191,9 @@ class MainEngine(object):
 
 
         # advance to next phase: get ready!
-        pygame.mixer.music.stop()
-        pygame.mixer.music.load("resource/sound_intro.mp3")
-        pygame.mixer.music.play(loops=0, start=0.0)
+        # pygame.mixer.music.stop()
+        # pygame.mixer.music.load("resource/sound_intro.mp3")
+        # pygame.mixer.music.play(loops=0, start=0.0)
         self.isLevelGenerated = True
         self.timerReady = PerpetualTimer(0.55, self.__initLevelStarting)
         self.timerReady.start()
@@ -206,7 +216,7 @@ class MainEngine(object):
             self.timerLoop.stop()
         except:
             pass
-        pygame.mixer.music.stop()
+        # pygame.mixer.music.stop()
         messagebox.showinfo("Game Over!", "You hit the escape key!")
         self.root.destroy()
 
@@ -245,26 +255,29 @@ class MainEngine(object):
         field.gameEngine.movingObjectPacman.dirNext = "Left"
 
         # ghost sound as music
-        pygame.mixer.music.stop()
-        pygame.mixer.music.load("resource/sound_ghost.ogg")
-        pygame.mixer.music.play(-1)
+        # pygame.mixer.music.stop()
+        # pygame.mixer.music.load("resource/sound_ghost.ogg")
+        # pygame.mixer.music.play(-1)
 
-        self.timerLoop = PerpetualTimer(0.045, self.loopFunction)
+        self.timerLoop = PerpetualTimer(0.03, self.loopFunction)
         self.timerLoop.start()
 
 
     def loopFunction(self):
-        field.gameEngine.loopFunction()
+        if self.isRunning:
+            self.isRunning = False
+            field.gameEngine.loopFunction()
 
-        coordGhosts = {}
+            coordGhosts = {}
+            # Ghost coordinates HERE!
+            for i in range(4):
+                coordGhosts['RelG{}'.format(i+1)] = field.gameEngine.movingObjectGhosts[i].coordinateRel    # ghosts relative coordinate
+                coordGhosts['AbsG{}'.format(i+1)] = field.gameEngine.movingObjectGhosts[i].coordinateAbs    # ghosts absolute coordinate
 
-        for i in range(4):
-            coordGhosts['RelG{}'.format(i+1)] = field.gameEngine.movingObjectGhosts[i].coordinateRel    # ghosts relative coordinate
-            coordGhosts['AbsG{}'.format(i+1)] = field.gameEngine.movingObjectGhosts[i].coordinateAbs    # ghosts absolute coordinate
-
-        self.spritePacman(field.gameEngine.movingObjectPacman.coordinateRel, field.gameEngine.movingObjectPacman.coordinateAbs)
-        self.spriteGhost(coordGhosts)
-        self.encounterEvent(field.gameEngine.movingObjectPacman.coordinateRel, field.gameEngine.movingObjectPacman.coordinateAbs)
+            self.spritePacman(field.gameEngine.movingObjectPacman.coordinateRel, field.gameEngine.movingObjectPacman.coordinateAbs)
+            self.spriteGhost(coordGhosts)
+            self.encounterEvent(field.gameEngine.movingObjectPacman.coordinateRel, field.gameEngine.movingObjectPacman.coordinateAbs)
+            self.isRunning = True
 
 
 
@@ -368,7 +381,11 @@ class MainEngine(object):
         ## ghosts sprite feature
         # this will adjust the coordinate of the sprite and make them animated, based on their absoluteCoord.
         for ghostNo in range(4):
+            #print(coordGhosts)
             if field.gameEngine.movingObjectGhosts[ghostNo].isActive == True:   # only active ghost will be shown
+                # print("ghostno: ", ghostNo)
+                # print("coordabs: ", field.gameEngine.movingObjectGhosts[ghostNo].coordinateAbs)
+                # print("coordrel: ", field.gameEngine.movingObjectGhosts[ghostNo].coordinateRel)
                 if field.gameEngine.movingObjectGhosts[ghostNo].dirCurrent == "Left":
 
                     # check the object passed field edges
@@ -466,14 +483,26 @@ class MainEngine(object):
 
     def encounterEvent(self, coordRelP, coordAbsP):
         ## encounter features
-
         encounterMov = field.gameEngine.encounterMoving(coordAbsP[0], coordAbsP[1]) # call encounterEvent for moving objects
-
         if encounterMov == 'dead':
             self.encounterEventDead()
-
-        else:
+        elif encounterMov == 'alive':
             pass
+        else:
+            i = int(encounterMov)
+            field.gameEngine.movingObjectGhosts[i].isCaged = True
+            field.gameEngine.movingObjectGhosts[i].coordinateRel[0] = field.gameEngine.cagedGhostcoords[0]
+            field.gameEngine.movingObjectGhosts[i].coordinateRel[1] = field.gameEngine.cagedGhostcoords[1]
+            field.gameEngine.movingObjectGhosts[i].coordinateAbs[0] = field.gameEngine.cagedGhostcoords[0] * 4 
+            field.gameEngine.movingObjectGhosts[i].coordinateAbs[1] = field.gameEngine.cagedGhostcoords[1] * 4
+            field.gameEngine.movingObjectGhosts[i].dirCurrent = "Stop"
+            self.wGameCanv.coords(self.wGameCanvMovingObjects[i + 1], 3 + field.gameEngine.cagedGhostcoords[0] * 17 + 8, 30 + field.gameEngine.cagedGhostcoords[1] * 17 + 8)
+            # print("encounter ghost")
+            # print("coordabs: ", field.gameEngine.movingObjectGhosts[int(encounterMov)].coordinateAbs)
+            # print("coordrel: ", field.gameEngine.movingObjectGhosts[int(encounterMov)].coordinateRel)
+
+
+ 
 
         # check the object reaches grid coordinate
         if coordAbsP[0] % 4 == 0 and coordAbsP[1] % 4 == 0:
@@ -487,23 +516,32 @@ class MainEngine(object):
                     self.wGameCanv.itemconfigure(self.wGameCanvObjects[coordRelP[0]][coordRelP[1]], state='hidden') # remove from the canvas
 
                     # play the sound (wa, ka, wa, ka, ...)
-                    if self.statusScore % 20 == 0:
-                        self.wSounds['chomp1'].play(loops=0)
-                    else:
-                        self.wSounds['chomp2'].play(loops=0)
+                    # if self.statusScore % 20 == 0:
+                    #     self.wSounds['chomp1'].play(loops=0)
+                    # else:
+                    #     self.wSounds['chomp2'].play(loops=0)
 
                     self.statusScore += 10 # adjust the score
                     self.wGameLabelScore.configure(text=("Score: " + str(self.statusScore))) # showing on the board
                     field.gameEngine.levelPelletRemaining -= 1 # adjust the remaining pellet numbers
 
-                    if field.gameEngine.levelPelletRemaining == 0:
-                        self.encounterEventLevelClear() # level clear
-                    else:
-                        pass
-
 
                 else:   # the pellet is already taken
                     pass
+            elif encounterFix == "powerup":
+                if field.gameEngine.levelObjects[coordRelP[0]][coordRelP[1]].isDestroyed == False:  # check the pellet is alive
+                    field.gameEngine.levelObjects[coordRelP[0]][coordRelP[1]].isDestroyed = True # destroy the pellet
+                    self.wGameCanv.itemconfigure(self.wGameCanvObjects[coordRelP[0]][coordRelP[1]], state='hidden') # remove from the canvas
+                    field.gameEngine.movingObjectPacman.isPoweredUp = True
+
+                    self.statusScore += 50 # adjust the score
+                    self.wGameLabelScore.configure(text=("Score: " + str(self.statusScore))) # showing on the board
+                    field.gameEngine.levelPowerUpRemaining -= 1 # adjust the remaining pellet numbers
+            
+            if field.gameEngine.levelPelletRemaining == 0 and field.gameEngine.levelPowerUpRemaining == 0:
+                self.encounterEventLevelClear() # level clear
+            else:
+                pass
 
         else: # pacman is not on grid coordinate
             pass
@@ -511,7 +549,7 @@ class MainEngine(object):
 
     def encounterEventLevelClear(self):
         # pause the game
-        pygame.mixer.music.stop()
+        # pygame.mixer.music.stop()
         self.timerLoop.stop()
         self.isPlaying = False
 
@@ -580,7 +618,7 @@ class MainEngine(object):
 
         # pause the game
         self.isPlaying = False
-        pygame.mixer.music.stop()
+        # pygame.mixer.music.stop()
         self.timerLoop.stop()
 
         # call the death loop
@@ -597,8 +635,8 @@ class MainEngine(object):
 
         elif self.statusDeadTimer == 6:
             # sound effect
-            pygame.mixer.music.load("resource/sound_death.mp3")
-            pygame.mixer.music.play(loops=0, start=0.0)
+            # pygame.mixer.music.load("resource/sound_death.mp3")
+            # pygame.mixer.music.play(loops=0, start=0.0)
             for i in range(4):  # hide the ghost sprite and initialize their status
                 self.wGameCanv.itemconfigure(self.wGameCanvMovingObjects[i+1], state='hidden')
                 field.gameEngine.movingObjectGhosts[i].isActive = False
@@ -679,7 +717,7 @@ class PerpetualTimer(object):
 
 
 # initialize pygame for sound effects
-pygame.mixer.init(22050, -16, 2, 64)
+# pygame.mixer.init(22050, -16, 2, 64)
 pygame.init()
 
 mainEngine = MainEngine()
